@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fatty Acids: Saturation and Melting Point</title>
+  <title>Fatty Acids: Unsaturation and Melting Point</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -10,9 +10,7 @@
       background: #f6f7f9;
     }
 
-    h1 {
-      font-size: 1.6em;
-    }
+    h1 { font-size: 1.6em; }
 
     .container {
       display: grid;
@@ -27,15 +25,13 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
-    .controls label {
+    label {
+      font-weight: bold;
       display: block;
       margin-top: 15px;
-      font-weight: bold;
     }
 
-    .controls input[type="range"] {
-      width: 100%;
-    }
+    input[type="range"] { width: 100%; }
 
     .room-temp {
       color: #d9534f;
@@ -49,76 +45,110 @@
       margin: auto;
     }
 
-    .status {
-      margin-top: 10px;
-      font-size: 1.1em;
-      font-weight: bold;
-    }
-
     .guided {
       margin-top: 15px;
-      padding: 10px;
+      padding: 12px;
       background: #eef3ff;
       border-left: 5px solid #4a6edb;
     }
 
-    .prediction {
-      margin-top: 10px;
+    .instruction {
+      font-style: italic;
+      margin-bottom: 10px;
+    }
+
+    .question { margin-top: 10px; }
+
+    .feedback {
+      font-size: 0.9em;
+      margin-top: 4px;
     }
 
     button {
-      margin-top: 8px;
-      padding: 6px 10px;
-      font-size: 0.9em;
+      margin-top: 5px;
+      margin-right: 5px;
+      padding: 5px 10px;
+      font-size: 0.85em;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
 
-<h1>Fatty Acids: Degree of Saturation and Melting Point</h1>
+<h1>Fatty Acids: Unsaturated C=C Double Bonds and Melting Point</h1>
 
 <div class="container">
 
-  <!-- LEFT PANEL: CONTROLS + GUIDED MODE -->
-  <div class="panel controls">
+  <!-- LEFT PANEL -->
+  <div class="panel">
     <h2>Variables</h2>
 
-    <label>
-      Degree of Saturation<br>
-      (Higher value = more C=C double bonds)
-    </label>
-    <input type="range" id="saturation" min="0" max="5" step="1" value="0">
-    <span id="satValue">0</span> C=C bonds
+    <label>Number of unsaturated C=C double bonds</label>
+    <input type="range" id="unsaturation" min="0" max="5" step="1" value="0">
+    <span id="unsatValue">0</span> C=C double bonds
 
-    <label>
-      Temperature (°C)
-    </label>
+    <label>Temperature (°C)</label>
     <input type="range" id="temperature" min="0" max="80" step="1" value="25">
     <span id="tempValue" class="room-temp">25 °C (room temperature)</span>
 
     <div class="guided">
       <strong>Guided Thinking</strong>
-      <p id="guidanceText">
-        Start by adjusting the degree of saturation. Observe how the structure of the fatty acid chains changes.
+
+      <p class="instruction">
+        C=C double bonds introduce kinks. Observe how this affects packing between the fatty acids and their melting point.
       </p>
 
-      <div class="prediction">
-        <strong>Prediction:</strong><br>
-        At 25 °C, is the fatty acid solid or liquid?
+      <div class="question">
+        How does the presence of kinks affect the packing of the fatty acids?
+        <br>
+        <button onclick="checkAnswer(1,'further')">Further apart</button>
+        <button onclick="checkAnswer(1,'closer')">Closer together</button>
+        <div id="fb1" class="feedback"></div>
+      </div>
+
+      <div class="question">
+        How does this packing affect intermolecular forces of attraction?
+        <br>
+        <button onclick="checkAnswer(2,'weaker')">Weaker</button>
+        <button onclick="checkAnswer(2,'stronger')">Stronger</button>
+        <div id="fb2" class="feedback"></div>
+      </div>
+
+      <div class="question">
+        Would more or less energy be required to overcome the intermolecular forces?
+        <br>
+        <button onclick="checkAnswer(3,'less')">Less</button>
+        <button onclick="checkAnswer(3,'more')">More</button>
+        <div id="fb3" class="feedback"></div>
+      </div>
+
+      <div class="question">
+        Would the melting point be higher or lower?
+        <br>
+        <button onclick="checkAnswer(4,'lower')">Lower</button>
+        <button onclick="checkAnswer(4,'higher')">Higher</button>
+        <div id="fb4" class="feedback"></div>
+      </div>
+
+      <div class="question">
+        <strong>Prediction:</strong> At 25 °C, is the fatty acid solid or liquid?
         <br>
         <button onclick="submitPrediction('solid')">Solid</button>
         <button onclick="submitPrediction('liquid')">Liquid</button>
+        <div id="predictionFeedback" class="feedback"></div>
       </div>
-
-      <p id="feedback"></p>
     </div>
   </div>
 
-  <!-- RIGHT PANEL: VISUALISATION -->
+  <!-- RIGHT PANEL -->
   <div class="panel">
     <h2>Visualisation</h2>
-    <canvas id="canvas" width="400" height="300"></canvas>
-    <div class="status" id="stateDisplay"></div>
+    <canvas id="canvas" width="420" height="300"></canvas>
+    <div id="stateDisplay" class="status"></div>
   </div>
 
 </div>
@@ -127,98 +157,150 @@
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
 
-  const saturationSlider = document.getElementById("saturation");
+  const unsatSlider = document.getElementById("unsaturation");
   const tempSlider = document.getElementById("temperature");
 
-  const satValue = document.getElementById("satValue");
+  const unsatValue = document.getElementById("unsatValue");
   const tempValue = document.getElementById("tempValue");
   const stateDisplay = document.getElementById("stateDisplay");
-  const guidanceText = document.getElementById("guidanceText");
-  const feedback = document.getElementById("feedback");
+
+  let time = 0;
 
   function calculateMeltingPoint(doubleBonds) {
-    // Trend-based model only
-    const baseMP = 50; // arbitrary baseline
-    return baseMP - doubleBonds * 8;
+    return 55 - doubleBonds * 9;
   }
 
   function determineState(temp, mp) {
     return temp >= mp ? "Liquid" : "Solid";
   }
 
-  function drawFattyAcids(doubleBonds) {
+  function drawFattyAcids(doubleBonds, temperature, state) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const chainCount = 4;
-    const startX = 80;
-    const spacing = 40 + doubleBonds * 6; // packing effect
+    const baseX = 90;
+    const spacing = 30 + doubleBonds * 10;
+    const chains = 4;
 
-    for (let i = 0; i < chainCount; i++) {
-      let x = startX + i * spacing;
-      let y = 40;
+    const amplitude =
+      (0.5 + doubleBonds * 0.8 + temperature * 0.03) *
+      (state === "Liquid" ? 1.5 : 1);
+
+    const speed =
+      0.01 + doubleBonds * 0.01 + temperature * 0.0008;
+
+    let fattyAcids = [];
+
+    for (let i = 0; i < chains; i++) {
+      const phase = time * speed + i * 1.5;
+      const offsetX = Math.sin(phase) * amplitude;
+      const offsetY = Math.cos(phase) * amplitude;
+
+      let x = baseX + i * spacing + offsetX;
+      let y = 40 + offsetY;
+
+      let anchors = [];
+
+      ctx.beginPath();
+      ctx.arc(x, y - 10, 6, 0, Math.PI * 2);
+      ctx.fillStyle = "#555";
+      ctx.fill();
 
       ctx.beginPath();
       ctx.moveTo(x, y);
 
+      let dir = 1;
       for (let j = 0; j < 6; j++) {
-        let kink = j < doubleBonds ? 15 : 0;
-        x += kink;
-        y += 30;
+        if (j < doubleBonds) {
+          x += 18 * dir;
+          dir *= -1;
+        }
+        y += 28;
         ctx.lineTo(x, y);
+        anchors.push({ x, y });
       }
 
       ctx.strokeStyle = "#333";
       ctx.lineWidth = 3;
       ctx.stroke();
+
+      fattyAcids.push(anchors);
     }
+
+    // IMF connector count rule
+    const baseLinks = 6 - doubleBonds; // 6 → 1 as unsaturation increases
+    const tempReduction = Math.floor(temperature / 25);
+    const linksPerPair = Math.max(1, baseLinks - tempReduction);
+
+    ctx.setLineDash([3, 6]);
+    ctx.strokeStyle = "rgba(0,0,0,0.5)";
+    ctx.lineWidth = 1.5;
+
+    for (let i = 0; i < fattyAcids.length - 1; i++) {
+      const left = fattyAcids[i];
+      const right = fattyAcids[i + 1];
+
+      for (let k = 0; k < linksPerPair; k++) {
+        const idx = Math.floor(
+          (k + 1) * left.length / (linksPerPair + 1)
+        );
+        ctx.beginPath();
+        ctx.moveTo(left[idx].x, left[idx].y);
+        ctx.lineTo(right[idx].x, right[idx].y);
+        ctx.stroke();
+      }
+    }
+
+    ctx.setLineDash([]);
   }
 
   function updateSimulation() {
-    const doubleBonds = parseInt(saturationSlider.value);
-    const temperature = parseInt(tempSlider.value);
+    const d = parseInt(unsatSlider.value);
+    const t = parseInt(tempSlider.value);
 
-    satValue.textContent = doubleBonds;
-    tempValue.textContent = temperature === 25
-      ? "25 °C (room temperature)"
-      : `${temperature} °C`;
+    unsatValue.textContent = d;
+    tempValue.textContent = t === 25 ? "25 °C (room temperature)" : `${t} °C`;
 
-    const mp = calculateMeltingPoint(doubleBonds);
-    const state = determineState(temperature, mp);
+    const mp = calculateMeltingPoint(d);
+    const state = determineState(t, mp);
 
-    drawFattyAcids(doubleBonds);
+    drawFattyAcids(d, t, state);
+    stateDisplay.textContent =
+      `Estimated melting point: ${mp} °C → State: ${state}`;
+  }
 
-    stateDisplay.textContent = `Estimated melting point: ${mp} °C → State: ${state}`;
+  function animate() {
+    time += 1;
+    updateSimulation();
+    requestAnimationFrame(animate);
+  }
 
-    // Guided prompts
-    if (doubleBonds === 0) {
-      guidanceText.textContent =
-        "The fatty acid chains are straight. Observe how closely they pack.";
+  function checkAnswer(q, answer) {
+    const correct = {1:"further",2:"weaker",3:"less",4:"lower"};
+    const fb = document.getElementById(`fb${q}`);
+    if (answer === correct[q]) {
+      fb.textContent = "Correct. This follows from the structural changes you observed.";
+      fb.style.color = "green";
     } else {
-      guidanceText.textContent =
-        "C=C double bonds introduce kinks. Observe how this affects packing between chains.";
+      fb.textContent = "Reconsider how the structure influences this step.";
+      fb.style.color = "red";
     }
   }
 
   function submitPrediction(answer) {
-    const doubleBonds = parseInt(saturationSlider.value);
-    const mp = calculateMeltingPoint(doubleBonds);
-    const correctState = determineState(25, mp).toLowerCase();
+    const mp = calculateMeltingPoint(parseInt(unsatSlider.value));
+    const correct = determineState(25, mp).toLowerCase();
+    const fb = document.getElementById("predictionFeedback");
 
-    if (answer === correctState) {
-      feedback.textContent =
-        "Correct. Your prediction matches the melting point relative to room temperature.";
-      feedback.style.color = "green";
+    if (answer === correct) {
+      fb.textContent = "Correct. Your prediction is consistent with the melting point.";
+      fb.style.color = "green";
     } else {
-      feedback.textContent =
-        "Recheck how kinks affect packing and intermolecular forces before deciding on the state.";
-      feedback.style.color = "red";
+      fb.textContent = "Trace the reasoning from packing to melting point again.";
+      fb.style.color = "red";
     }
   }
 
-  saturationSlider.addEventListener("input", updateSimulation);
-  tempSlider.addEventListener("input", updateSimulation);
-
-  updateSimulation();
+  animate();
 </script>
 
 </body>
