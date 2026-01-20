@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fatty Acids: Saturation and Melting Point</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f6f7f9;
+    }
+
+    h1 {
+      font-size: 1.6em;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .controls label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    .controls input[type="range"] {
+      width: 100%;
+    }
+
+    .room-temp {
+      color: #d9534f;
+      font-weight: bold;
+    }
+
+    canvas {
+      border: 1px solid #ccc;
+      background: #ffffff;
+      display: block;
+      margin: auto;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 1.1em;
+      font-weight: bold;
+    }
+
+    .guided {
+      margin-top: 15px;
+      padding: 10px;
+      background: #eef3ff;
+      border-left: 5px solid #4a6edb;
+    }
+
+    .prediction {
+      margin-top: 10px;
+    }
+
+    button {
+      margin-top: 8px;
+      padding: 6px 10px;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Fatty Acids: Degree of Saturation and Melting Point</h1>
+
+<div class="container">
+
+  <!-- LEFT PANEL: CONTROLS + GUIDED MODE -->
+  <div class="panel controls">
+    <h2>Variables</h2>
+
+    <label>
+      Degree of Saturation<br>
+      (Higher value = more C=C double bonds)
+    </label>
+    <input type="range" id="saturation" min="0" max="5" step="1" value="0">
+    <span id="satValue">0</span> C=C bonds
+
+    <label>
+      Temperature (°C)
+    </label>
+    <input type="range" id="temperature" min="0" max="80" step="1" value="25">
+    <span id="tempValue" class="room-temp">25 °C (room temperature)</span>
+
+    <div class="guided">
+      <strong>Guided Thinking</strong>
+      <p id="guidanceText">
+        Start by adjusting the degree of saturation. Observe how the structure of the fatty acid chains changes.
+      </p>
+
+      <div class="prediction">
+        <strong>Prediction:</strong><br>
+        At 25 °C, is the fatty acid solid or liquid?
+        <br>
+        <button onclick="submitPrediction('solid')">Solid</button>
+        <button onclick="submitPrediction('liquid')">Liquid</button>
+      </div>
+
+      <p id="feedback"></p>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: VISUALISATION -->
+  <div class="panel">
+    <h2>Visualisation</h2>
+    <canvas id="canvas" width="400" height="300"></canvas>
+    <div class="status" id="stateDisplay"></div>
+  </div>
+
+</div>
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const saturationSlider = document.getElementById("saturation");
+  const tempSlider = document.getElementById("temperature");
+
+  const satValue = document.getElementById("satValue");
+  const tempValue = document.getElementById("tempValue");
+  const stateDisplay = document.getElementById("stateDisplay");
+  const guidanceText = document.getElementById("guidanceText");
+  const feedback = document.getElementById("feedback");
+
+  function calculateMeltingPoint(doubleBonds) {
+    // Trend-based model only
+    const baseMP = 50; // arbitrary baseline
+    return baseMP - doubleBonds * 8;
+  }
+
+  function determineState(temp, mp) {
+    return temp >= mp ? "Liquid" : "Solid";
+  }
+
+  function drawFattyAcids(doubleBonds) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const chainCount = 4;
+    const startX = 80;
+    const spacing = 40 + doubleBonds * 6; // packing effect
+
+    for (let i = 0; i < chainCount; i++) {
+      let x = startX + i * spacing;
+      let y = 40;
+
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+
+      for (let j = 0; j < 6; j++) {
+        let kink = j < doubleBonds ? 15 : 0;
+        x += kink;
+        y += 30;
+        ctx.lineTo(x, y);
+      }
+
+      ctx.strokeStyle = "#333";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+  }
+
+  function updateSimulation() {
+    const doubleBonds = parseInt(saturationSlider.value);
+    const temperature = parseInt(tempSlider.value);
+
+    satValue.textContent = doubleBonds;
+    tempValue.textContent = temperature === 25
+      ? "25 °C (room temperature)"
+      : `${temperature} °C`;
+
+    const mp = calculateMeltingPoint(doubleBonds);
+    const state = determineState(temperature, mp);
+
+    drawFattyAcids(doubleBonds);
+
+    stateDisplay.textContent = `Estimated melting point: ${mp} °C → State: ${state}`;
+
+    // Guided prompts
+    if (doubleBonds === 0) {
+      guidanceText.textContent =
+        "The fatty acid chains are straight. Observe how closely they pack.";
+    } else {
+      guidanceText.textContent =
+        "C=C double bonds introduce kinks. Observe how this affects packing between chains.";
+    }
+  }
+
+  function submitPrediction(answer) {
+    const doubleBonds = parseInt(saturationSlider.value);
+    const mp = calculateMeltingPoint(doubleBonds);
+    const correctState = determineState(25, mp).toLowerCase();
+
+    if (answer === correctState) {
+      feedback.textContent =
+        "Correct. Your prediction matches the melting point relative to room temperature.";
+      feedback.style.color = "green";
+    } else {
+      feedback.textContent =
+        "Recheck how kinks affect packing and intermolecular forces before deciding on the state.";
+      feedback.style.color = "red";
+    }
+  }
+
+  saturationSlider.addEventListener("input", updateSimulation);
+  tempSlider.addEventListener("input", updateSimulation);
+
+  updateSimulation();
+</script>
+
+</body>
+</html>
